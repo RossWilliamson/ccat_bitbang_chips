@@ -1,5 +1,5 @@
-
 from bitstring import BitArray
+import math
 
 ###########################################################################
 #
@@ -37,10 +37,12 @@ class register0:
         self.int = 0
 
     def set_frac(self,frac):
-        pass
+        self.frac = frac
+        self.reg[-15:-3] = self.frac
 
-    def set_int(self,frac):
-        pass
+    def set_int(self,int):
+        self.int = int
+        self.reg[-31:-15] = self.int
 
 ###########################################################################
 #
@@ -246,6 +248,15 @@ class register2:
         self.reg = BitArray(32)
         self.reg[-3:] = 0b010 #Control bits
         
+        self.modeval = {"3_State" : 0,
+                   "Vcc" : 1,
+                   "GND" : 2,
+                   "REF_/_R" : 3,
+                   "RF_/_N" : 4,
+                   "Analog_LD" : 5,
+                   "Digital_LD" : 6}
+
+
         self.set_creset(creset)
         self.set_cp3(cp3)
         self.set_pdwn(pdwn)
@@ -257,7 +268,7 @@ class register2:
         self.set_refdiv(refdiv)
         self.set_refdiv2(refdiv2)
         self.set_refx2(refx2)
-        #self.set_muxout(muxount)
+        self.set_muxout(muxout)
         self.set_lnoise(lnoise)
 
     def set_creset(self,creset):
@@ -269,7 +280,7 @@ class register2:
         self.reg[-5] = self.cp3
 
     def set_pdwn(self,pdwn):
-        self.pdwn = pwdn
+        self.pdwn = pdwn
         self.reg[-6] = self.pdwn
  
     def set_pdp(self,pdp):
@@ -293,7 +304,7 @@ class register2:
         self.reg[-14] = self.dblbufen
 
     def set_refdiv(self,refdiv):
-        self.refdiv = refdivv
+        self.refdiv = refdiv
         self.reg[-24:-14] = self.refdiv
 
     def set_refdiv2(self,refdiv2):
@@ -305,7 +316,8 @@ class register2:
         self.reg[-26] = refx2
 
     def set_muxout(self,muxout):
-        pass
+        self.muxout = muxout
+        self.reg[-29:-26] = self.modeval[self.muxout]
 
     def set_lnoise(self,lnoise):
         self.lnoise = lnoise
@@ -441,3 +453,103 @@ class register3:
 # AUXPWR    | RFEN| OUTPUT PWR | CONTROL C3-C1 (100)
 #
 ###########################################################################
+class register4:
+    def __init__(self,
+                 fbsel = 1,
+                 bandseldiv = 140,
+                 mute = 0,
+                 auxoutsel = 0,
+                 auxouten = 0,
+                 auxoutpwr = 0,
+                 rfouten = 1,
+                 rfoutpwr = 0):
+              
+        self.reg = BitArray(32)
+        self.reg[-3:] = 0b100 #Control bits
+
+        self.set_fbsel(fbsel)
+        self.set_bandseldiv(bandseldiv)
+        self.set_mute(mute)
+        self.set_auxoutsel(auxoutsel)
+        self.set_auxouten(auxouten)
+        self.set_auxoutpwr(auxoutpwr)
+        self.set_rfouten(rfouten)
+        self.set_rfoutpwr(rfoutpwr)
+
+    def set_outdivider(self,outdivider):
+        self.outdivider = outdivider
+        #We calculate the log2 value for the actual reg
+        tmp_val = int(math.log(outdivider,2))
+        self.set_rfdivsel(tmp_val)
+
+    def set_rfoutpwr(self,rfoutpwr):
+        self.rfoutpwr = rfoutpwr
+        self.reg[-5:-3] = self.rfoutpwr
+
+    def set_rfouten(self,rfouten):
+        self.rfouten = rfouten
+        #we also need to negate on vcopd
+        self.set_vcopd(not rfouten)
+        self.reg[-6] = self.rfouten
+
+    def set_auxoutpwr(self,auxoutpwr):
+        self.auxoutpwr = auxoutpwr
+        self.reg[-8:-6] = self.auxoutpwr
+
+    def set_auxouten(self, auxouten):
+        self.auxouten = auxouten
+        self.reg[-9] = self.auxouten
+
+    def set_auxoutsel(self, auxoutsel):
+        self.auxoutsel = auxoutsel
+        self.reg[-10] = self.auxoutsel
+
+    def set_mute(self, mute):
+        self.mute = mute
+        self.reg[-11] = self.mute
+
+    def set_vcopd(self, vcopd):
+        self.vcopd = vcopd
+        self.reg[-12] = self.vcopd
+
+    def set_bandseldiv(self, bandseldiv):
+        self.bandseldiv = bandseldiv
+        self.reg[-20:-12] = self.bandseldiv
+
+    def set_rfdivsel(self, rfdivsel):
+        self.rfdivsel = rfdivsel
+        self.reg[-23:-20] = self.rfdivsel
+
+    def set_fbsel(self, fbsel):
+        self.fbsel = fbsel
+        self.reg[-24] = self.fbsel
+
+##########################################################################
+#	
+# REGISTER 5		
+#
+# Control Bits
+# With Bits [C3:C1] set to 1, 0, 1, Register 5 is programmed. 
+# 
+# Lock Detect Pin Operation
+# Bits [DB23:DB22] set the operation of the lock detect pin (see Figure 29).
+#    0 - low ; 1= diglockdet; 2= low, 3=high
+#
+# DB31 - DB24 | DB23 - DB22 | DB21 | DB20 - DB19 | DB18 - DB3 | DB2 - DB0
+# RESERVED    | LOCKDET PIN | RES  | RESERVED    | RESERVED   | CONTROL C3-C1 (101)
+#
+###########################################################################
+class register5:
+    def __init__(self,
+                 lockdet = 1):
+                
+        self.reg = BitArray(32)
+        self.reg[-3:] = 0b101 #Control bit
+        #rev1 only so need to set reserved pins
+        self.reg[-21:-19] = 3
+
+        self.set_lockdet(lockdet)
+
+    def set_lockdet(self,lockdet):
+        self.lockdet = lockdet
+        self.reg[-24:-22] = self.lockdet
