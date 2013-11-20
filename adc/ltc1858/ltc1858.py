@@ -1,16 +1,21 @@
 import RPi.GPIO as GPIO
 from numpy import arange
+import logging
 import time
+
+logging.basicConfig()
 
 class ltc1858:
     def __init__(self):
         #define pins
-        self.SDI = 11
-        self.SCK = 13
-        self.CONV = 15
-        self.BUSY = 19
-        self.RD = 21
-        self.SDO = 23
+        self.logger = logging.getLogger('LTC1858')
+        self.logger.setLevel(logging.WARNING)
+        self.SDI = 9
+        self.SDO = 10
+        self.SCK = 11
+        self.CONV = 7
+        #self.BUSY = 19
+        self.RD = 8
         
         self.vrange = {"+-5V" : 0b00,
                      "+5V" : 0b10,
@@ -28,20 +33,28 @@ class ltc1858:
                       7 : 0b111}
 
 
+        self.adc_reg = {"Monitor" : False,
+                        "Range" : "+5V",
+                        "V" : 0}
+        
+        self.chip_reg = []
+        for i in xrange(8):
+            self.chip_reg.append(self.adc_reg)
+
         self.single_ended = 0b1 << 15
 
         self.setup_pins()
         self.setup_chip()
 
     def setup_pins(self):
-        GPIO.setmode(GPIO.BOARD) #use board numbering
+        GPIO.setmode(GPIO.BCM) #use board numbering
         #Set output pins
         GPIO.setup(self.SDI, GPIO.OUT)
         GPIO.setup(self.SCK, GPIO.OUT)
         GPIO.setup(self.CONV, GPIO.OUT)
         GPIO.setup(self.RD, GPIO.OUT)
         #Set input pins
-        GPIO.setup(self.BUSY, GPIO.IN) #Wrong chip for this....Don't use
+        #GPIO.setup(self.BUSY, GPIO.IN) #Wrong chip for this....Don't use
         GPIO.setup(self.SDO, GPIO.IN)
 
     def setup_chip(self):
@@ -49,6 +62,11 @@ class ltc1858:
         GPIO.output(self.CONV, False)
         GPIO.output(self.SDI, False)
         GPIO.output(self.SCK, False)
+
+    def set_reg(self,adc,monitor,adc_range):
+        self.chip_reg[adc]["Monitor"] = monitor
+        self.chip_reg[adc]["Range"] = adc_range
+
 
     def construct_word(self, chan_no, vrange):
         t_word = self.single_ended
@@ -66,6 +84,14 @@ class ltc1858:
         data_conv  = self.convert_to_v(data_out, v_range)
         return data_conv
 
+    def register_read(self):
+        #This does one pass at reading all dac inputs
+        for i in xrange(8):
+            if self.chip_reg[i]["Monitor"] is True:
+                vv = self.single_read(i,self.chip_reg[i]["Range"])
+                self.chip_reg[i]["V"] = vv
+                                      
+
     def send_data(self,data):
         GPIO.output(self.SCK, False)
         GPIO.output(self.RD, False) 
@@ -73,7 +99,7 @@ class ltc1858:
         data_in = 0
         for i in arange(15,-1,-1):
             dbit = ((data >> i) & 0x01)
-            print dbit
+            self.logger.debug(dbit)
             GPIO.output(self.SDI,dbit)
             GPIO.output(self.SCK,True)
             #let's read the data
@@ -84,7 +110,7 @@ class ltc1858:
         time.sleep(10e-6)
         GPIO.output(self.CONV,False)
         data_in = (data_in >> 2) #only 14 bits
-        print bin(data_in)
+        self.logger.info(bin(data_in))
         return data_in
 
     def convert_to_v(self,num, v_range):  
