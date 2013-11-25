@@ -39,7 +39,7 @@ class ltc1858:
         
         self.chip_reg = []
         for i in xrange(8):
-            self.chip_reg.append(self.adc_reg)
+            self.chip_reg.append(self.adc_reg.copy())
 
         self.single_ended = 0b1 << 15
 

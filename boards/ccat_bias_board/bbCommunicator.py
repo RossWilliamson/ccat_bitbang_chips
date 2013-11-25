@@ -3,6 +3,7 @@ import threading
 import time
 from dac.ad5734 import ad5734
 from adc.ltc1858 import ltc1858
+from mux.adg5409 import adg5409
 
 logging.basicConfig()
 
@@ -13,6 +14,7 @@ class bbCommunicator():
 
         self.adc = ltc1858.ltc1858()
         self.dac = ad5734.ad5734_chained(nchips=3)
+        self.mux = adg5409.adg5409()
         
         self.adc_event = threading.Event()
         self.mem_lock = threading.Lock()
@@ -31,15 +33,15 @@ class bbCommunicator():
         #slow that is
         self.drainV = 0
         self.drainI = 1
-        self.gndSense = 2
-        self.auxV = 3
+        self.auxV = 2
+        self.gndSense = 3
         self.gateaV = 4
         self.gateaI = 5
         self.gatebV = 6
         self.gatebI = 7
 
-        self.adc.set_reg(self.drainV,True,"+5V")
-        self.adc.set_reg(self.drainI,True,"+5V")
+        self.adc.set_reg(self.drainV,True,"+-5V")
+        self.adc.set_reg(self.drainI,True,"+-5V")
         self.adc.set_reg(self.gndSense,True,"+-5V")
         self.adc.set_reg(self.auxV,True,"+-5V") 
         self.adc.set_reg(self.gateaV,True,"+-5V") 
@@ -68,6 +70,7 @@ class bbCommunicator():
         self.gateb.append({"Chip" : 1, "daq" : "DACB", "V" : 0, "I" : 0})
         self.gateb.append({"Chip" : 0, "daq" : "DACA", "V" : 0, "I" : 0})
         self.gateb.append({"Chip" : 0, "daq" : "DACD", "V" : 0, "I" : 0})
+        
         
         #And we set the daq ranges
         for i in xrange(4):
@@ -131,26 +134,37 @@ class bbCommunicator():
     def collect_single_adc_data(self):
         #set the mux position
         for i in xrange(4):
-            #self.mux.set(i)
+            self.mux.set_mux(i)
             self.mem_lock.acquire()
             self.adc.register_read()
             self.mem_lock.release()
             
-            self.drain[i]["V"] = self.adc.chip_reg[self.drainV]["V"]
+            self.sense = self.adc.chip_reg[self.gndSense]["V"]
+
+            self.drain[i]["V"] = self.calculate_voltage(self.adc.chip_reg[self.drainV]["V"])
             self.drain[i]["I"] = self.calculate_current(self.adc.chip_reg[self.drainI]["V"],
                                                         self.adc.chip_reg[self.drainV]["V"],
                                                         self.drain_sense_r)
             
-            self.gatea[i]["V"] = self.adc.chip_reg[self.gateaV]["V"]
+            self.gatea[i]["V"] = self.calculate_voltage(self.adc.chip_reg[self.gateaV]["V"])
             self.gatea[i]["I"] = self.calculate_current(self.adc.chip_reg[self.gateaI]["V"],
                                                         self.adc.chip_reg[self.gateaV]["V"],
                                                         self.gate_sense_r)
                 
-            self.gateb[i]["V"] = self.adc.chip_reg[self.gatebV]["V"]
+            self.gateb[i]["V"] = self.calculate_voltage(self.adc.chip_reg[self.gatebV]["V"])
             self.gateb[i]["I"] = self.calculate_current(self.adc.chip_reg[self.gatebI]["V"],
                                                         self.adc.chip_reg[self.gatebV]["V"],
                                                         self.gate_sense_r)
 
+    def calculate_voltage(self,v1):
+        #Calculates the voltage - We use the class member
+        #self.sense to remove GND sense voltage
+
+        return v1 - self.sense
+
     def calculate_current(self,v1,v2,res_val):
         #Calculates the current from the input voltages and resistances
-        return (v1-v2)/res_val
+        v1 = -v1
+        v1 = v1+self.sense # Invert because the board is crap
+        v2 = v2-self.sense
+        return (v1-v2)*1000.0/res_val

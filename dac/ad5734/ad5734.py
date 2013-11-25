@@ -10,7 +10,7 @@ GPIO.setwarnings(False)
 class ad5734_chained:
     def __init__(self,nchips=3):
         self.logger = logging.getLogger("AD5734_Chained")
-        self.logger.setLevel(logging.DEBUG)
+        self.logger.setLevel(logging.WARNING)
         self.nchips = nchips
         self.chips = []
         for i in xrange(nchips):
@@ -63,7 +63,7 @@ class ad5734:
     def __init__(self,single=True,
                  vref=2.5):
         self.logger = logging.getLogger("AD5734")
-        self.logger.setLevel(logging.DEBUG)
+        self.logger.setLevel(logging.WARNING)
 
         self.vref = vref
         self.single = single
@@ -109,10 +109,10 @@ class ad5734:
                         "Range" : "+5V",
                         "Vout" : 0}
 
-        self.chip_reg = {"DACA" : self.dac_reg,
-                         "DACB" : self.dac_reg,
-                         "DACC" : self.dac_reg,
-                         "DACD" : self.dac_reg}
+        self.chip_reg = {"DACA" : self.dac_reg.copy(),
+                         "DACB" : self.dac_reg.copy(),
+                         "DACC" : self.dac_reg.copy(),
+                         "DACD" : self.dac_reg.copy()}
 
         self.reg_addr = {"DAC" : 0b000,
                          "RANGE" : 0b001,
