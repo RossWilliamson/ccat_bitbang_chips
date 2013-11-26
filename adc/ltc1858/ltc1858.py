@@ -1,4 +1,5 @@
-import RPi.GPIO as GPIO
+from Adafruit_BBIO.SPI import SPI
+from bitstring import BitArray
 from numpy import arange
 import logging
 import time
@@ -10,12 +11,17 @@ class ltc1858:
         #define pins
         self.logger = logging.getLogger('LTC1858')
         self.logger.setLevel(logging.WARNING)
-        self.SDI = 9
-        self.SDO = 10
-        self.SCK = 11
-        self.CONV = 7
-        #self.BUSY = 19
-        self.RD = 8
+
+        self.spi_bus = 0
+        self.spi_client = 0
+        self.spi_freq = 1000000 #1Mhz is plenty
+        self.spi_mode = 0b00
+        
+        """We actually send 16 bits but the SPI protocol is a bit screwy
+        It's just easier currently to send two 8 bit words as protocol
+        is broken"""
+        self.spi_bits_per_word = 8
+        self.spi_cshigh = False
         
         self.vrange = {"+-5V" : 0b00,
                      "+5V" : 0b10,
@@ -33,7 +39,7 @@ class ltc1858:
                       7 : 0b111}
 
 
-        self.adc_reg = {"Monitor" : False,
+        self.adc_reg = {"Monitor" : True,
                         "Range" : "+5V",
                         "V" : 0}
         
@@ -41,22 +47,18 @@ class ltc1858:
         for i in xrange(8):
             self.chip_reg.append(self.adc_reg.copy())
 
-        self.single_ended = 0b1 << 15
+        self.single_ended = 0b1
 
-        self.setup_pins()
-        self.setup_chip()
+        self.setup_spi()
 
-    def setup_pins(self):
-        GPIO.setmode(GPIO.BCM) #use board numbering
-        #Set output pins
-        GPIO.setup(self.SDI, GPIO.OUT)
-        GPIO.setup(self.SCK, GPIO.OUT)
-        GPIO.setup(self.CONV, GPIO.OUT)
-        GPIO.setup(self.RD, GPIO.OUT)
-        #Set input pins
-        #GPIO.setup(self.BUSY, GPIO.IN) #Wrong chip for this....Don't use
-        GPIO.setup(self.SDO, GPIO.IN)
-
+    def setup_spi(self):
+        #This is for BB Black
+        self.spi = SPI(self.spi_bus, self.spi_client)
+        self.spi.msh = self.spi_freq
+        self.spi.mode = self.spi_mode
+        self.bpw = self.spi_bits_per_word
+        self.spi.cshigh = self.spi_cshigh
+        
     def setup_chip(self):
         GPIO.output(self.RD, True)
         GPIO.output(self.CONV, False)
@@ -67,13 +69,13 @@ class ltc1858:
         self.chip_reg[adc]["Monitor"] = monitor
         self.chip_reg[adc]["Range"] = adc_range
 
-
     def construct_word(self, chan_no, vrange):
-        t_word = self.single_ended
-        t_word += (self.chans[chan_no] << 12)
-        t_word += (self.vrange[vrange] << 10)
+        t_word = BitArray(8)
+        t_word[0] = self.single_ended
+        t_word[1:4] = self.chans[chan_no]
+        t_word[4:6] = self.vrange[vrange]
+        
         #Ignore nap and sleep
-
         return t_word
 
     def single_read(self, chan_no, v_range):
@@ -91,47 +93,23 @@ class ltc1858:
                 vv = self.single_read(i,self.chip_reg[i]["Range"])
                 self.chip_reg[i]["V"] = vv
                                       
-
     def send_data(self,data):
-        GPIO.output(self.SCK, False)
-        GPIO.output(self.RD, False) 
-
-        data_in = 0
-        for i in arange(15,-1,-1):
-            dbit = ((data >> i) & 0x01)
-            self.logger.debug(dbit)
-            GPIO.output(self.SDI,dbit)
-            GPIO.output(self.SCK,True)
-            #let's read the data
-            data_in += GPIO.input(self.SDO) << i
-            GPIO.output(self.SCK,False)
-        #Now take conv high
-        GPIO.output(self.CONV,True)
-        time.sleep(10e-6)
-        GPIO.output(self.CONV,False)
-        data_in = (data_in >> 2) #only 14 bits
-        self.logger.info(bin(data_in))
+        self.spi.writebytes([data.uint,0x00]) #Send data then zeros as per DS
+        #at 1MHz we don't care if it's duplex read
+        a,b = self.spi.readbytes(2)
+        data_in = BitArray(14)
+        data_in[0:8] = a 
+        data_in[8:] = (b >> 2)
         return data_in
 
     def convert_to_v(self,num, v_range):  
         if v_range == "+5V":
-            return 5.0*num/2**14
+            return 5.0*num.uint/2**14
         elif v_range == "+10V":
-            return 10.0*num/2**14
+            return 10.0*num.uint/2**14
         elif v_range == "+-5V":
-            if ((num & 0x2000) >> 13) == 1:
-                return num*10.0/2**14 - 10
-            else:
-                return num*10.0/2**14
+                return num.int*5.0/2**13
         elif v_range == "+-10V":
-            if ((num & 0x2000) >> 13) == 1:
-                return num*20.0/2**14 - 20
-            else:
-                return num*20.0/2**14
+            return num.int*10.0/2**13
         else:
             return -69
-        
-    def two_comp(self,val):
-        if ( (val&(1<<(14-1))) != 0 ):
-            val = val - (1<<14)
-        return val
