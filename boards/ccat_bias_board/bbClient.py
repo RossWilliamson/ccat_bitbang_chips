@@ -1,30 +1,50 @@
 import network.tcpClient as tp
 import simplejson as json
 import logging
- 
+import struct
+
 logging.basicConfig()
 
 class bbClient():
-    def __init__(self, hostname="rtpi", port=50001):
+    def __init__(self, hostname="localhost", port=50001):
         self.logger = logging.getLogger('bbClient')
         self.logger.setLevel(logging.DEBUG)
         self.conn = tp.tcpClient(hostname,port,terminator="\r\n")
         self.local_terminator = "\r\n"
+
+        self.drain = []
+        self.drain.append({"V" : 0, "I" : 0})
+        self.drain.append({"V" : 0, "I" : 0})
+        self.drain.append({"V" : 0, "I" : 0})
+        self.drain.append({"V" : 0, "I" : 0})
+
+        self.gatea = []
+        self.gatea.append({"V" : 0, "I" : 0})
+        self.gatea.append({"V" : 0, "I" : 0})
+        self.gatea.append({"V" : 0, "I" : 0})
+        self.gatea.append({"V" : 0, "I" : 0})
+
+        self.gateb = []
+        self.gateb.append({"V" : 0, "I" : 0})
+        self.gateb.append({"V" : 0, "I" : 0})
+        self.gateb.append({"V" : 0, "I" : 0})
+        self.gateb.append({"V" : 0, "I" : 0})
 
     def send(self,msg):
         self.conn.send(msg)
 
     def fetchDict(self):
         self.send("read")
-        self.conn.recv_term()
-        self.drains = json.loads(self.conn.data_message)
+        self.conn.recv_nbytes(96)
+        data = struct.unpack("!24f", self.conn.data_message)
+        for i in xrange(4):
+             self.drain[i]["V"] = data[0+i]
+             self.drain[i]["I"] = data[4+i]
+             self.gatea[i]["V"] = data[8+i]
+             self.gatea[i]["I"] = data[12+i]
+             self.gateb[i]["V"] = data[16+i]
+             self.gateb[i]["I"] = data[20+i]
         
-        self.conn.recv_term()
-        self.gatea = json.loads(self.conn.data_message)
-        
-        self.conn.recv_term()
-        self.gateb = json.loads(self.conn.data_message)
-
     def setPower(self,amp,state):
         self.checkAmp(amp)
         if amp is not None:
@@ -53,7 +73,7 @@ class bbClient():
         #print output of data (rough)
         for i in xrange(4):
             str = "Amp %i: D: %5.3f (%5.3f), GA %5.3f (%5.3f), GB %5.3f (%5.3f)" % (i,
-                                                                                    self.drains[i]["V"], self.drains[i]["I"],
+                                                                                    self.drain[i]["V"], self.drain[i]["I"],
                                                                                     self.gatea[i]["V"], self.gatea[i]["I"],
                                                                                     self.gateb[i]["V"], self.gateb[i]["I"])
             print str

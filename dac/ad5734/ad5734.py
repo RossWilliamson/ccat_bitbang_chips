@@ -1,4 +1,5 @@
-import RPi.GPIO as GPIO
+#import RPi.GPIO as GPIO
+import Adafruit_BBIO.GPIO as GPIO
 from bitstring import BitArray
 from numpy import *
 import time
@@ -70,10 +71,10 @@ class ad5734:
 
         self.nbits = 2**14
         #define pins
-        self.SCLK_DAC = 17
-        self.DIN_DAC = 23
-        self.SYNC = 24
-        self.LDAC = 27
+        self.SCLK_DAC = "P8_11"
+        self.DIN_DAC = "P8_12"
+        self.SYNC = "P8_15"
+        self.LDAC = "P8_16"
         
         
         self.vrange = {"+5V" : 0b000,
@@ -121,10 +122,9 @@ class ad5734:
 
         self.setup_pins()
         self.setup_chip()
-        self.tmp_setup_mux()
 
     def setup_pins(self):
-        GPIO.setmode(GPIO.BCM) #use BCM numbering from breakout board
+        #GPIO.setmode(GPIO.BCM) #use BCM numbering from breakout board
         #Set output pins
         GPIO.setup(self.SCLK_DAC, GPIO.OUT)
         GPIO.setup(self.DIN_DAC, GPIO.OUT)
@@ -135,12 +135,6 @@ class ad5734:
         GPIO.output(self.SCLK_DAC, True)
         GPIO.output(self.SYNC, True)
         GPIO.output(self.LDAC, True)
-
-    def tmp_setup_mux(self):
-        self.A0 = 22
-        self.A1 = 25
-        GPIO.setup(self.A0, GPIO.OUT)
-        GPIO.setup(self.A1, GPIO.OUT)
         
 
     def construct_word(self, reg, dac,data):

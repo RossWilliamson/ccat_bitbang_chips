@@ -1,4 +1,5 @@
-import RPi.GPIO as GPIO
+#import RPi.GPIO as GPIO
+import Adafruit_BBIO.GPIO as GPIO
 from bitstring import BitArray
 
 import logging
@@ -11,13 +12,13 @@ class adg5409:
         self.logger = logging.getLogger("AD5409")
         self.logger.setLevel(logging.INFO)
 
-        self.A0 = 22
-        self.A1 = 25
+        self.A0 = "P8_17"
+        self.A1 = "P8_18"
         
         self.setup_pins()
         
     def setup_pins(self):
-        GPIO.setmode(GPIO.BCM) #use BCM numbering from breakout board
+        #GPIO.setmode(GPIO.BCM) #use BCM numbering from breakout board
 
         GPIO.setup(self.A0, GPIO.OUT)
         GPIO.setup(self.A1, GPIO.OUT)

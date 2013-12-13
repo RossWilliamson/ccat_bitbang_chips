@@ -40,8 +40,8 @@ class bbCommunicator():
         self.gatebV = 6
         self.gatebI = 7
 
-        self.adc.set_reg(self.drainV,True,"+-5V")
-        self.adc.set_reg(self.drainI,True,"+-5V")
+        self.adc.set_reg(self.drainV,True,"+5V")
+        self.adc.set_reg(self.drainI,True,"+-10V")
         self.adc.set_reg(self.gndSense,True,"+-5V")
         self.adc.set_reg(self.auxV,True,"+-5V") 
         self.adc.set_reg(self.gateaV,True,"+-5V") 
@@ -160,11 +160,14 @@ class bbCommunicator():
         #Calculates the voltage - We use the class member
         #self.sense to remove GND sense voltage
 
-        return v1 - self.sense
+        #return v1 - self.sense
+        return v1
 
     def calculate_current(self,v1,v2,res_val):
         #Calculates the current from the input voltages and resistances
         v1 = -v1
-        v1 = v1+self.sense # Invert because the board is crap
-        v2 = v2-self.sense
-        return (v1-v2)*1000.0/res_val
+        #v1 = v1+self.sense # Invert because the board is crap
+        #v2 = v2-self.sense
+        #return (v1-v2)*1000.0/res_val
+        #Gain of 100 then milivolts
+        return 10*v1/res_val

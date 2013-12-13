@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from PyQt4 import QtCore, QtGui
 from bbClient import *
 from bbampui import *
@@ -17,7 +18,7 @@ class bbGui(QtGui.QDialog):
         self.setupUi()
         self.setup_slots()
 
-        self.update_timer.start(1000)
+        self.update_timer.start(200)
 
     def setupUi(self):
         self.setWindowTitle("MMIC Amplifier Control")

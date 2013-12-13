@@ -23,6 +23,7 @@ class ltc1858:
         self.spi_bits_per_word = 8
         self.spi_cshigh = False
         
+        self.data_in = BitArray(14)
         self.vrange = {"+-5V" : 0b00,
                      "+5V" : 0b10,
                      "+-10V" : 0b01,
@@ -39,9 +40,14 @@ class ltc1858:
                       7 : 0b111}
 
 
-        self.adc_reg = {"Monitor" : True,
+        self.adc_reg = {"Monitor" : False,
                         "Range" : "+5V",
-                        "V" : 0}
+                        "V" : 0,
+                        "Command" : 0}
+
+        #Bitstring is terribly slow so for a register
+        #read we use a preconstructed bitstring rather
+        #Than create every time
         
         self.chip_reg = []
         for i in xrange(8):
@@ -68,6 +74,7 @@ class ltc1858:
     def set_reg(self,adc,monitor,adc_range):
         self.chip_reg[adc]["Monitor"] = monitor
         self.chip_reg[adc]["Range"] = adc_range
+        self.chip_reg[adc]["Command"] = self.construct_word(adc,adc_range)
 
     def construct_word(self, chan_no, vrange):
         t_word = BitArray(8)
@@ -81,7 +88,7 @@ class ltc1858:
     def single_read(self, chan_no, v_range):
         #Need to set command and then read back so 
         #two words - Just send the same word twice
-        self.send_data(self.construct_word(chan_no, v_range))
+        #self.send_data(self.construct_word(chan_no, v_range))
         data_out = self.send_data(self.construct_word(chan_no, v_range))
         data_conv  = self.convert_to_v(data_out, v_range)
         return data_conv
@@ -90,17 +97,17 @@ class ltc1858:
         #This does one pass at reading all dac inputs
         for i in xrange(8):
             if self.chip_reg[i]["Monitor"] is True:
-                vv = self.single_read(i,self.chip_reg[i]["Range"])
+                data_out = self.send_data(self.chip_reg[i]["Command"])
+                vv = self.convert_to_v(data_out, self.chip_reg[i]["Range"])
                 self.chip_reg[i]["V"] = vv
                                       
     def send_data(self,data):
         self.spi.writebytes([data.uint,0x00]) #Send data then zeros as per DS
         #at 1MHz we don't care if it's duplex read
         a,b = self.spi.readbytes(2)
-        data_in = BitArray(14)
-        data_in[0:8] = a 
-        data_in[8:] = (b >> 2)
-        return data_in
+        self.data_in[0:8] = a 
+        self.data_in[8:] = (b >> 2)
+        return self.data_in
 
     def convert_to_v(self,num, v_range):  
         if v_range == "+5V":

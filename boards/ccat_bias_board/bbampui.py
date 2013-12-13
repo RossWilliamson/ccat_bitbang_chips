@@ -6,17 +6,17 @@ class drain_doubleInput(QtGui.QDoubleSpinBox):
     def __init__(self,gui_parent=None):
         QtGui.QDoubleSpinBox.__init__(self, gui_parent)
 
-        self.setRange(0,5)
+        self.setRange(0,10)
         self.setDecimals(2)
-        self.setSingleStep(0.01)
+        self.setSingleStep(0.1)
 
 class gate_doubleInput(QtGui.QDoubleSpinBox):
     def __init__(self,gui_parent=None):
         QtGui.QDoubleSpinBox.__init__(self, gui_parent)
 
-        self.setRange(-5,5)
+        self.setRange(-10,10)
         self.setDecimals(2)
-        self.setSingleStep(0.01)
+        self.setSingleStep(0.1)
 
 
 class amp_widget(QtGui.QWidget):
@@ -71,11 +71,14 @@ class amp_widget(QtGui.QWidget):
         self.amp_layout.setRowMinimumHeight(4,15)
         self.amp_layout.setRowStretch(4,1)
 
+        self.keep_values = QtGui.QCheckBox("Restore")
+        self.keep_values.setCheckState(QtCore.Qt.Checked)
         self.power_button = QtGui.QPushButton("Power")
         self.power_button.setCheckable(True)
 
         self.amp_led  = QLed.QLed(self,onColour=QLed.QLed.Green, offColour=QLed.QLed.Red)
-        self.amp_layout.addWidget(self.power_button,5,1,1,2)
+        self.amp_layout.addWidget(self.keep_values,5,0,1,2)
+        self.amp_layout.addWidget(self.power_button,5,2,1,1)
         self.amp_layout.addWidget(self.amp_led,5,3,1,1)
         
         self.setLayout(self.amp_layout)
@@ -99,10 +102,16 @@ class amp_widget(QtGui.QWidget):
     def call_power(self,state):
         self.p.setPower(self.index, state)
         self.amp_led.setValue(state)
+        if self.keep_values.checkState is QtCore.Qt.Checked:
+            self.call_drain_set(self.drain_set.value())
+            self.call_gatea_set(self.gatea_set.value())
+            self.call_gateb_set(self.gateb_set.value())
+       
+       
 
     def update_monitor(self):
-        self.drain_v_val.setText(QtCore.QString.number(self.p.drains[self.index]["V"],"f",3))
-        self.drain_i_val.setText(QtCore.QString.number(self.p.drains[self.index]["I"],"f",3))
+        self.drain_v_val.setText(QtCore.QString.number(self.p.drain[self.index]["V"],"f",3))
+        self.drain_i_val.setText(QtCore.QString.number(self.p.drain[self.index]["I"],"f",3))
         self.gatea_v_val.setText(QtCore.QString.number(self.p.gatea[self.index]["V"],"f",3))
         self.gatea_i_val.setText(QtCore.QString.number(self.p.gatea[self.index]["I"],"f",3))
         self.gateb_v_val.setText(QtCore.QString.number(self.p.gateb[self.index]["V"],"f",3))

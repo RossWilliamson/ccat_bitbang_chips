@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 import bbCommunicator as bb
-import simplejson as json
+#import simplejson as json #Because JSON SUCKS
+import struct #Binary is the only way
 import logging
+from numpy import zeros
 
 from twisted.protocols.basic import LineReceiver
 from twisted.internet.protocol import ServerFactory
@@ -18,16 +20,21 @@ class bbReceiver(LineReceiver):
         sline = line.split()
         if sline[0] == "read":
             self.logger.debug("Sending Data")
+            data = ""
             bb_data = self.factory.bbc.collect_single_adc_data()
-            data = json.dumps(self.factory.bbc.drain)
+            
+            data_f = zeros(24)
+            for i in xrange(4):
+                data_f[0+i] = self.factory.bbc.drain[i]["V"]
+                data_f[4+i] = self.factory.bbc.drain[i]["I"]
+                data_f[8+i] = self.factory.bbc.gatea[i]["V"]
+                data_f[12+i] = self.factory.bbc.gatea[i]["I"]
+                data_f[16+i] = self.factory.bbc.gateb[i]["V"]
+                data_f[20+i] = self.factory.bbc.gateb[i]["I"]
+
+            data = struct.pack("!24f",*data_f)
             self.transport.write(data)
-            self.transport.write("\r\n")
-            data = json.dumps(self.factory.bbc.gatea)
-            self.transport.write(data)
-            self.transport.write("\r\n")
-            data = json.dumps(self.factory.bbc.gateb)
-            self.transport.write(data)
-            self.transport.write("\r\n")
+
         elif sline[0] == "set":
             if sline[1] == "amp":
                 self.logger.debug("Setting amp %s %s %s",sline[2], sline[3], sline[4])
