@@ -8,14 +8,18 @@ logging.basicConfig()
 GPIO.setwarnings(False)
 
 class zx76_31:
-    def __init__(self):
+    def __init__(self,LE="P8_44",
+                 CLK="P8_45",
+                 DATA="P8_46",
+                 name="zx76_31"):
         self.logger = logging.getLogger("ZX76_31")
         self.logger.setLevel(logging.DEBUG)
 
-        self.LE = "P8_44"
-        self.CLK = "P8_45"
-        self.DATA = "P8_46"
-        
+        self.LE = LE
+        self.CLK = CLK
+        self.DATA = DATA
+        self.name = name
+
         self.setup_pins()
         
     def setup_pins(self):
@@ -36,8 +40,6 @@ class zx76_31:
         
         tmp_bit = BitArray(6)
         tmp_bit[0:5] = int(round(value))
-        #GPIO.output(self.A1, tmp_bit[0])
-        #GPIO.output(self.A0, tmp_bit[1])
         
         self.logger.debug(tmp_bit.bin)
         for bit in tmp_bit:

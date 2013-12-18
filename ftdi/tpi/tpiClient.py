@@ -6,7 +6,7 @@ import struct
 logging.basicConfig()
 
 class tpiClient():
-    def __init__(self, hostname="localhost", port=50010):
+    def __init__(self, hostname="bbone", port=50010):
         self.logger = logging.getLogger('tpiClient')
         self.logger.setLevel(logging.DEBUG)
         self.conn = tp.tcpClient(hostname,port,terminator="\r\n")
