@@ -15,7 +15,7 @@ logging.basicConfig()
 class tpiReceiver(LineReceiver):
     def __init__(self):
        self.logger = logging.getLogger('tpiClient')
-       self.logger.setLevel(logging.INFO)
+       self.logger.setLevel(logging.DEBUG)
 
     def lineReceived(self,line):
         sline = line.split()

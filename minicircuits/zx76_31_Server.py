@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import minicirbuits.zx76_31 as vatten
+import minicircuits.zx76_31 as vatten
 import argparse
 import logging
 
@@ -13,20 +13,24 @@ logging.basicConfig()
 class zx76_31Receiver(LineReceiver):
     def __init__(self):
        self.logger = logging.getLogger('zx76_31Server')
-       self.logger.setLevel(logging.INFO)
+       self.logger.setLevel(logging.DEBUG)
 
     def lineReceived(self,line):
         sline = line.split()
         if sline[0] == "set":
             if sline[1] == "atten":
                 self.logger.debug("Setting atten %s ",sline[2])
-                self.zx76_31.set_atten(int(sline[2]))
+                self.factory.zx76_31.set_atten(int(sline[2]))
+        elif sline[0] == "get":
+            if sline[1] == "name":
+                self.transport.write(self.factory.zx76_31.name)
+                self.transport.write("\r\n")
 
 class zx76_31_Server(ServerFactory):
     protocol = zx76_31Receiver
 
     def __init__(self,LE,CLK,DATA,name):
-        self.zx76_31 = vatten.zx76_31()
+        self.zx76_31 = vatten.zx76_31(LE,CLK,DATA,name)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -43,7 +47,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    reactor.listenTCP(args.port, tpiServer(args.le,
+    reactor.listenTCP(args.port, zx76_31_Server(args.le,
                                            args.clk,
                                            args.data,
                                            args.name))
