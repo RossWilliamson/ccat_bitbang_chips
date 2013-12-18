@@ -1,8 +1,12 @@
+#!/usr/bin/env python
 import network.tcpClient as tp
 import simplejson as json
 import logging
 import struct
+import argparse
+import sys
 
+from tpiGui import *
 logging.basicConfig()
 
 class tpiClient():
@@ -40,3 +44,19 @@ class tpiClient():
             return None
         return power
 
+    def launch_gui(self):
+        self.app = QtGui.QApplication(sys.argv)
+        self.gui = tpiGui(self)
+        self.gui.show()
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-n", "--hostname", help="Hostname to connect to",
+                        default="bbone")
+    parser.add_argument("-p", "--port", help="Port number to connect to",
+                        default=50010, type=int)
+    args = parser.parse_args()
+
+    gg = tpiClient(args.hostname, args.port)
+    gg.launch_gui()
+    sys.exit(gg.app.exec_())

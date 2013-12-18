@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 from PyQt4 import QtCore, QtGui
-from tpiClient import *
 import sys
 
 try:
@@ -57,9 +56,9 @@ class scan_widget(QtGui.QWidget):
         self.setLayout(self.comb_layout)
 
 class tpiGui(QtGui.QWidget):
-    def __init__(self,gui_parent=None):
+    def __init__(self,parent,gui_parent=None):
         QtGui.QDialog.__init__(self, gui_parent)
-        self.p = tpiClient()        
+        self.p = parent       
         self.setupUi()
         self.setup_slots()
 
@@ -151,12 +150,3 @@ class tpiGui(QtGui.QWidget):
         self.rfonButton.setEnabled(True)
         self.rfoffButton.setEnabled(False)
 
-
-def main():
-    app = QtGui.QApplication(sys.argv)
-    ex = tpiGui()
-    ex.show()
-    sys.exit(app.exec_())
-
-if __name__ == '__main__':
-    main()
