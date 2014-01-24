@@ -1,8 +1,12 @@
+#!/usr/bin/env python
 import network.tcpClient as tp
 import simplejson as json
 import logging
 import struct
+import argparse
+import sys
 
+from bbGui import *
 logging.basicConfig()
 
 class bbClient():
@@ -77,3 +81,20 @@ class bbClient():
                                                                                     self.gatea[i]["V"], self.gatea[i]["I"],
                                                                                     self.gateb[i]["V"], self.gateb[i]["I"])
             print str
+
+    def launch_gui(self):
+        self.app = QtGui.QApplication(sys.argv)
+        self.gui = bbGui(self)
+        self.gui.show()
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-n", "--hostname", help="Hostname to connect to",
+                        default="bbone")
+    parser.add_argument("-p", "--port", help="Port number to connect to",
+                        default=50001, type=int)
+    args = parser.parse_args()
+
+    gg = bbClient(args.hostname, args.port)
+    gg.launch_gui()
+    sys.exit(gg.app.exec_())

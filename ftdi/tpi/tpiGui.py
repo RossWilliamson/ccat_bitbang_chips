@@ -55,7 +55,7 @@ class scan_widget(QtGui.QWidget):
         
         self.setLayout(self.comb_layout)
 
-class tpiGui(QtGui.QWidget):
+class tpiGui(QtGui.QDialog):
     def __init__(self,parent,gui_parent=None):
         QtGui.QDialog.__init__(self, gui_parent)
         self.p = parent       
