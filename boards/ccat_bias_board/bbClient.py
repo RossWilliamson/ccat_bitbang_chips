@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import network.tcpClient as tp
-import simplejson as json
 import logging
 import struct
 import argparse
