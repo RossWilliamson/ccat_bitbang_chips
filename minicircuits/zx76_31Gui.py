@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 from PyQt4 import QtCore, QtGui
-from zx76_31Client import *
 import sys
 
 try:
@@ -9,9 +8,9 @@ except AttributeError:
     _fromUtf8 = lambda s: s
 
 class zx76_31Gui(QtGui.QWidget):
-    def __init__(self,hostname="localhost",port=50020,gui_parent=None):
+    def __init__(self,parent,gui_parent=None):
         QtGui.QDialog.__init__(self, gui_parent)
-        self.p = zx76_31Client(hostname,port)        
+        self.p = parent    
         self.setupUi()
         self.setup_slots()
 
@@ -35,12 +34,3 @@ class zx76_31Gui(QtGui.QWidget):
     def setup_slots(self):
         QtCore.QObject.connect(self.atten_val,QtCore.SIGNAL("valueChanged(int)"), self.p.setatten)
         
-
-def main():
-    app = QtGui.QApplication(sys.argv)
-    ex = zx76_31Gui()
-    ex.show()
-    sys.exit(app.exec_())
-
-if __name__ == '__main__':
-    main()

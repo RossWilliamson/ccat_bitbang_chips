@@ -4,9 +4,6 @@ import struct #Binary is the only way
 import logging
 from numpy import zeros
 
-""" We will also include in here options for setting
-The variable attenuators and the Roach clock source"""
-
 from twisted.protocols.basic import LineReceiver
 from twisted.internet.protocol import ServerFactory
 from twisted.internet import reactor

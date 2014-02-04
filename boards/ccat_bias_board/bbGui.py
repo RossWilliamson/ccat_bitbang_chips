@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 from PyQt4 import QtCore, QtGui
-from bbClient import *
 from bbampui import *
 
 try:
@@ -10,15 +9,15 @@ except AttributeError:
 
 
 class bbGui(QtGui.QDialog):
-    def __init__(self,gui_parent=None):
+    def __init__(self,parent,gui_parent=None):
         QtGui.QDialog.__init__(self, gui_parent)
-        self.p = bbClient()
+        self.p = parent
         self.update_timer = QtCore.QTimer()
         
         self.setupUi()
         self.setup_slots()
 
-        self.update_timer.start(200)
+        self.update_timer.start(500)
 
     def setupUi(self):
         self.setWindowTitle("MMIC Amplifier Control")
@@ -70,13 +69,3 @@ class bbGui(QtGui.QDialog):
         self.amp4_widget.update_monitor()
 
         #self.p.printData()
-
-def main():
-    app = QtGui.QApplication(sys.argv)
-    ex = bbGui()
-    ex.show()
-    sys.exit(app.exec_())
-
-
-if __name__ == '__main__':
-    main()
