@@ -8,9 +8,9 @@ logging.basicConfig()
 GPIO.setwarnings(False)
 
 class zx76_31:
-    def __init__(self,LE="P8_44",
-                 CLK="P8_45",
-                 DATA="P8_46",
+    def __init__(self,LE="P8_41",
+                 CLK="P8_42",
+                 DATA="P8_43",
                  name="zx76_31"):
         self.logger = logging.getLogger("ZX76_31")
         self.logger.setLevel(logging.DEBUG)

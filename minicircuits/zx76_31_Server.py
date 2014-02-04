@@ -37,11 +37,11 @@ if __name__ == '__main__':
     parser.add_argument("-p", "--port", help="Port number to listen on",
                         default=50020, type=int)
     parser.add_argument("-l", "--le", help="LE Pin",
-                        default="P8_44")
+                        default="P8_41")
     parser.add_argument("-c", "--clk", help="CLK Pin",
-                        default="P8_45")
+                        default="P8_42")
     parser.add_argument("-d", "--data", help="DATA Pin",
-                        default="P8_46")
+                        default="P8_43")
     parser.add_argument("-n", "--name", help="Instance Name",
                         default="zx76_31")
 

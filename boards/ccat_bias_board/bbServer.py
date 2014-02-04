@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 import bbCommunicator as bb
-#import ftdi.tpi.tpiCommunicator as tpi
-#import minicircuits.zx76_31 as atten
-#import simplejson as json #Because JSON SUCKS
 import struct #Binary is the only way
 import logging
 from numpy import zeros
@@ -56,7 +53,6 @@ class bbServer(ServerFactory):
 
     def __init__(self):
         self.bbc = bb.bbCommunicator()
-        self.tpi = tpi.
 
 if __name__ == '__main__':
     reactor.listenTCP(50001, bbServer())

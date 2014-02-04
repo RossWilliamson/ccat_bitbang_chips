@@ -1,4 +1,5 @@
 from Adafruit_BBIO.SPI import SPI
+import Adafruit_BBIO.GPIO as GPIO
 from bitstring import BitArray
 from numpy import arange
 import logging
@@ -23,6 +24,11 @@ class ltc1858:
         self.spi_bits_per_word = 8
         self.spi_cshigh = False
         
+        #Need the RD set to low to get data - Could do something    
+        #more fancy with this later
+
+        self.RD = "P9_12"
+
         self.data_in = BitArray(14)
         self.vrange = {"+-5V" : 0b00,
                      "+5V" : 0b10,
@@ -55,6 +61,7 @@ class ltc1858:
 
         self.single_ended = 0b1
 
+        self.setup_chip()
         self.setup_spi()
 
     def setup_spi(self):
@@ -66,10 +73,10 @@ class ltc1858:
         self.spi.cshigh = self.spi_cshigh
         
     def setup_chip(self):
-        GPIO.output(self.RD, True)
-        GPIO.output(self.CONV, False)
-        GPIO.output(self.SDI, False)
-        GPIO.output(self.SCK, False)
+        #Just need to setup RD and make sure it is low
+        GPIO.setup(self.RD, GPIO.OUT)
+        GPIO.output(self.RD, False)
+     
 
     def set_reg(self,adc,monitor,adc_range):
         self.chip_reg[adc]["Monitor"] = monitor
