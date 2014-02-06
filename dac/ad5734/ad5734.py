@@ -11,7 +11,7 @@ GPIO.setwarnings(False)
 class ad5734_chained:
     def __init__(self,nchips=3):
         self.logger = logging.getLogger("AD5734_Chained")
-        self.logger.setLevel(logging.WARNING)
+        self.logger.setLevel(logging.DEBUG)
         self.nchips = nchips
         self.chips = []
         for i in xrange(nchips):
@@ -64,7 +64,7 @@ class ad5734:
     def __init__(self,single=True,
                  vref=2.5):
         self.logger = logging.getLogger("AD5734")
-        self.logger.setLevel(logging.WARNING)
+        self.logger.setLevel(logging.DEBUG)
 
         self.vref = vref
         self.single = single
