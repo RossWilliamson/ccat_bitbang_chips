@@ -9,13 +9,17 @@ logging.basicConfig()
 GPIO.setwarnings(False)
 
 class ad5734_chained:
-    def __init__(self,nchips=3):
+    def __init__(self,nchips=3,
+                 SCLK_DAC = "P8_11",
+                 DIN_DAC = "P8_12",
+                 SYNC = "P8_15",
+                 LDAC = "P8_16"):
         self.logger = logging.getLogger("AD5734_Chained")
         self.logger.setLevel(logging.DEBUG)
         self.nchips = nchips
         self.chips = []
         for i in xrange(nchips):
-            self.chips.append(ad5734(single=False))
+            self.chips.append(ad5734(False,SCLK_DAC,DIN_DAC,SYNC,LDAC))
 
 
     def set_power(self,chips,dac,state):
@@ -25,6 +29,8 @@ class ad5734_chained:
             print "IDIOT"
 
         for i in xrange(self.nchips):
+            tmp_str = "Working on %i" % i
+            self.logger.info(tmp_str)
             if chips[i] is True:
                 self.chips[i].power_state(dac,state)
             else:
@@ -39,6 +45,8 @@ class ad5734_chained:
             print "IDIOT"
 
         for i in xrange(self.nchips):
+            tmp_str = "Working on %i" % i
+            self.logger.info(tmp_str)
             if chips[i] is True:
                 self.chips[i].set_range(dac,dac_range)
             else:
@@ -53,6 +61,8 @@ class ad5734_chained:
             print "IDIOT"
 
         for i in xrange(self.nchips):
+            tmp_str = "Working on %i" % i
+            self.logger.info(tmp_str)
             if chips[i] is True:
                 self.chips[i].set_volts(dac,v)
             else:
@@ -62,20 +72,22 @@ class ad5734_chained:
 
 class ad5734:
     def __init__(self,single=True,
-                 vref=2.5):
+                 SCLK_DAC = "P8_11",
+                 DIN_DAC = "P8_12",
+                 SYNC = "P8_15",
+                 LDAC = "P8_16"):
         self.logger = logging.getLogger("AD5734")
         self.logger.setLevel(logging.DEBUG)
 
-        self.vref = vref
+        self.vref = 2.5
         self.single = single
 
         self.nbits = 2**14
         #define pins
-        self.SCLK_DAC = "P8_11"
-        self.DIN_DAC = "P8_12"
-        self.SYNC = "P8_15"
-        self.LDAC = "P8_16"
-        
+        self.SCLK_DAC = SCLK_DAC
+        self.DIN_DAC = DIN_DAC
+        self.SYNC = SYNC
+        self.LDAC = LDAC
         
         self.vrange = {"+5V" : 0b000,
                        "+10V" : 0b001,
@@ -113,7 +125,7 @@ class ad5734:
         self.chip_reg = {"DACA" : self.dac_reg.copy(),
                          "DACB" : self.dac_reg.copy(),
                          "DACC" : self.dac_reg.copy(),
-                         "DACD" : self.dac_reg.copy()}
+                          "DACD" : self.dac_reg.copy()}
 
         self.reg_addr = {"DAC" : 0b000,
                          "RANGE" : 0b001,
@@ -149,6 +161,9 @@ class ad5734:
         return word
 
     def power_state(self,dac,state):
+        tmp_str = "Setting %s power state to  %i" % (dac, state)
+        self.logger.info(tmp_str)
+        
         data = BitArray(16)
         idx = self.dac_pwr_addr[dac]
         if idx == 4: #do all
@@ -176,6 +191,9 @@ class ad5734:
         data = BitArray(16)
         data[-3:] = self.vrange[dac_range]
 
+        tmp_str = "Setting %s to range %s" % (dac, dac_range)
+        self.logger.info(tmp_str)
+
         word =  self.construct_word("RANGE", dac, data)
 
         if dac == "DACALL":
@@ -197,6 +215,9 @@ class ad5734:
     def set_volts(self,dac,v):
         #need to fix v_range with correct
         #stored parameter or logic
+        tmp_str = "Setting %s to %f Volts" % (dac, v)
+        self.logger.info(tmp_str)
+
         data = BitArray(16)
         v_range = self.chip_reg[dac]["Range"]
         data[0:14] = self.v_to_bits(v,v_range)
@@ -213,6 +234,8 @@ class ad5734:
         #This sends a no operation command
         #Useful when chaining together chips
         #Just send zeros to ctrl reg dacA
+
+        self.logger.debug("Sending NOP")
         data = BitArray(16)
         word = self.construct_word("CTRL", "DACA", data)
         self.logger.debug(word.bin)
@@ -232,26 +255,29 @@ class ad5734:
 
     def send_word(self,word):
         for dbit in word:
+            GPIO.output(self.SCLK_DAC, True)
             GPIO.output(self.DIN_DAC, dbit)
             GPIO.output(self.SCLK_DAC, False)
-            GPIO.output(self.SCLK_DAC, True)
 
     def start_transmit(self):
         #This is here if we want to send to more
         #than one chip daisychanned together
-        GPIO.output(self.LDAC, True)
+        self.logger.debug("Starting Transmit")
         GPIO.output(self.SCLK_DAC, True)
+        GPIO.output(self.SYNC, True)
+        GPIO.output(self.LDAC, True)
         GPIO.output(self.SYNC, False)
 
     def end_transmit(self):
         #This is used to latch registers
+        self.logger.debug("End Transmit")
         GPIO.output(self.SYNC,True)
 
     def update_dacs(self):
         #This is used to update all the dacs
+        self.logger.debug("Updating DACS")
         GPIO.output(self.LDAC, False)
         GPIO.output(self.LDAC, True)
-
         
     def v_to_bits(self,v, v_range):  
         #Need to put checks in her for correct range

@@ -8,12 +8,22 @@ from mux.adg5409 import adg5409
 logging.basicConfig()
 
 class bbCommunicator():
-    def __init__(self):
+    def __init__(self,
+                 spi_bus = 0,
+                 spi_client = 0,
+                 spi_freq = 1000000,
+                 spi_mode = 0b00,
+                 RD = "P9_12",
+                 SCLK_DAC = "P8_11",
+                 DIN_DAC = "P8_12",
+                 SYNC = "P8_15",
+                 LDAC = "P8_16"
+                 ):
         self.logger = logging.getLogger('bbCommunicator')
         self.logger.setLevel(logging.DEBUG)
 
-        self.adc = ltc1858.ltc1858()
-        self.dac = ad5734.ad5734_chained(nchips=3)
+        self.adc = ltc1858.ltc1858(spi_bus,spi_client,spi_freq,spi_mode)
+        self.dac = ad5734.ad5734_chained(3,SCLK_DAC,DIN_DAC,SYNC,LDAC)
         self.mux = adg5409.adg5409()
         
         self.adc_event = threading.Event()

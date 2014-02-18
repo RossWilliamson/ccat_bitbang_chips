@@ -2,6 +2,7 @@
 import bbCommunicator as bb
 import struct #Binary is the only way
 import logging
+import argparse
 from numpy import zeros
 
 from twisted.protocols.basic import LineReceiver
@@ -52,6 +53,34 @@ class bbServer(ServerFactory):
         self.bbc = bb.bbCommunicator()
 
 if __name__ == '__main__':
-    reactor.listenTCP(50001, bbServer())
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-p", "--port", help="Port number to listen on",
+                        default=50001, type=int)
+
+    #ADC settings
+    parser.add_argument("-b", "--spibus", help="SPI Bus",
+                        default="0")
+    parser.add_argument("-c", "--spiclient", help="SPI Client",
+                        default="0")
+    parser.add_argument("-f", "--spifreq", help="SPI Frequency",
+                        default="1000000")
+    parser.add_argument("-m", "--spimode", help="SPI Mode",
+                        default="0b00")
+    parser.add_argument("-r", "--rd", help="RD Pin",
+                        default="P9_12")
+
+    #DAC settings
+    parser.add_argument("-s", "--sclk", help="SCLK_DAC Pin",
+                        default="P8_11")
+    parser.add_argument("-d", "--din", help="DIN_DAC Pin",
+                        default="P8_12")
+    parser.add_argument("-y", "--sync", help="SYNC Pin",
+                        default="P8_15")
+    parser.add_argument("-l", "--ldac", help="LDAC Pin",
+                        default="P8_16")
+
+    args = parser.parse_args()
+
+    reactor.listenTCP(args.port, bbServer())
     reactor.run()
         

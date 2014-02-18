@@ -8,15 +8,20 @@ import time
 logging.basicConfig()
 
 class ltc1858:
-    def __init__(self):
+    def __init__(self,
+                 spi_bus = 0,
+                 spi_client = 0,
+                 spi_freq = 1000000,
+                 spi_mode = 0b00,
+                 RD = "P9_12"):
         #define pins
         self.logger = logging.getLogger('LTC1858')
         self.logger.setLevel(logging.WARNING)
 
-        self.spi_bus = 0
-        self.spi_client = 0
-        self.spi_freq = 1000000 #1Mhz is plenty
-        self.spi_mode = 0b00
+        self.spi_bus = spi_bus
+        self.spi_client = spi_client
+        self.spi_freq = spi_freq #1Mhz is plenty
+        self.spi_mode = spi_mode
         
         """We actually send 16 bits but the SPI protocol is a bit screwy
         It's just easier currently to send two 8 bit words as protocol
@@ -27,7 +32,7 @@ class ltc1858:
         #Need the RD set to low to get data - Could do something    
         #more fancy with this later
 
-        self.RD = "P9_12"
+        self.RD = RD
 
         self.data_in = BitArray(14)
         self.vrange = {"+-5V" : 0b00,

@@ -57,10 +57,10 @@ class bbClient():
     def latchDaq(self):
         self.send("latch")
 
-    def setAmp(self,amp,type,v):
+    def setAmp(self,amp,amp_type,v):
         if self.checkAmp(amp) is None:
             return None
-        if type == "drain" or type == "gatea" or type == "gateb":
+        if type == "drain" or amp_type == "gatea" or amp_type == "gateb":
             msg = "set amp %i %s %f" % (amp,type,v)
             self.send(msg)
         else:
