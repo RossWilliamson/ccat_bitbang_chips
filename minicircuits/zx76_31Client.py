@@ -17,9 +17,14 @@ class zx76_31Client():
     def send(self,msg):
         self.conn.send(msg)
         
-    def setatten(self,atten):
+    def setatten0(self,atten):
         if atten is not None:
-            msg = "set atten %i" % (atten)
+            msg = "set atten0 %i" % (chip,atten)
+            self.send(msg)
+    
+    def setatten1(self,atten):
+        if atten is not None:
+            msg = "set atten1 %i" % (chip,atten)
             self.send(msg)
 
     def getName(self):
