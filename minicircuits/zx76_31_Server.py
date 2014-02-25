@@ -18,9 +18,12 @@ class zx76_31Receiver(LineReceiver):
     def lineReceived(self,line):
         sline = line.split()
         if sline[0] == "set":
-            if sline[1] == "atten":
-                self.logger.debug("Setting atten %s ",sline[2])
-                self.factory.zx76_31.set_atten(int(sline[2]))
+            if sline[1] == "atten0":
+                self.logger.debug("Setting atten0 %s ",sline[2])
+                self.factory.zx76_31[0].set_atten(int(sline[2]))
+            elif sline[1] == "atten1":
+                self.logger.debug("Setting atten1 %s ",sline[2])
+                self.factory.zx76_31[1].set_atten(int(sline[2]))    
         elif sline[0] == "get":
             if sline[1] == "name":
                 self.transport.write(self.factory.zx76_31.name)
@@ -30,7 +33,10 @@ class zx76_31_Server(ServerFactory):
     protocol = zx76_31Receiver
 
     def __init__(self,LE,CLK,DATA,name):
-        self.zx76_31 = vatten.zx76_31(LE,CLK,DATA,name)
+        """OK this is a hack that should be fixed"""
+        self.zx76_31 = []
+        self.zx76_31.append(vatten.zx76_31(LE,CLK,DATA,name))
+        self.zx76_31.append(vatten.zx76_31("P8_44", "P8_45", "P8_46"))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
